@@ -4,8 +4,8 @@ const router = express.Router();
 //var queries = require('../queries');
 
 /* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+router.get('/', function (req, res, next) {
+    res.render('index', { title: 'Express' });
 });
 
 
@@ -26,6 +26,7 @@ module.exports = {
 
 router.post('/persons', createPerson);
 router.get('/persons', getAllPersons);
+router.get('/persons/latest', getLatestPerson);
 router.get('/persons/:id', getSinglePerson);
 router.put('/persons/:id', updatePerson);
 router.delete('/persons/:id', removePerson);
@@ -49,49 +50,49 @@ router.delete('/places/:id', removePlace);
 
 
 
-function connect(){
+function connect() {
 
-  const initOptions = {
-    schema: 'public'
-  };
-  const pgp = require('pg-promise')(initOptions);
+    const initOptions = {
+        schema: 'public'
+    };
+    const pgp = require('pg-promise')(initOptions);
 
 
-//var {dbconfig} = require('./../config/dbConfig');
+    //var {dbconfig} = require('./../config/dbConfig');
 
-  const dbconfig =
-      {
+    const dbconfig =
+    {
         host: 'ec2-54-228-252-67.eu-west-1.compute.amazonaws.com',
         database: 'dbnnftuqdohm1v',
         user: 'tfrieerfftsnhh',
         port: 5432,
         password: 'fc3f34cad9dc486ee12dae073396bcdd394ec341ea4ca14269dd623563e46ee4',
         dialect: 'postgres'
-      };
+    };
 
 
-  var db = {
-    database: dbconfig.database,
-    username: dbconfig.user,
-    password: dbconfig.password,
-    host: dbconfig.host,
-    port: dbconfig.port,
-    dialect: dbconfig.dialect
-  };
+    var db = {
+        database: dbconfig.database,
+        username: dbconfig.user,
+        password: dbconfig.password,
+        host: dbconfig.host,
+        port: dbconfig.port,
+        dialect: dbconfig.dialect
+    };
 
-  const connectionString = db.dialect + "://" + db.username+ ":" + db.password + "@" + db.host + ":" + db.port + "/" + db.database + "?ssl=true";
-  //console.log(connectionString);
+    const connectionString = db.dialect + "://" + db.username + ":" + db.password + "@" + db.host + ":" + db.port + "/" + db.database + "?ssl=true";
+    //console.log(connectionString);
 
-  const cn = pgp(connectionString);
+    const cn = pgp(connectionString);
 
-  return cn;
+    return cn;
 
 }
 
 
 /* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+router.get('/', function (req, res, next) {
+    res.render('index', { title: 'Express' });
 });
 
 
@@ -100,23 +101,23 @@ module.exports = router;
 /* PERSONS CRUD */
 
 function getAllPersons(req, res, next) {
-  //console.log("Personnes");
-  const cn = connect();
-  cn.any('select * from person', [(true)])
-      .then(function (data) {
+    //console.log("Personnes");
+    const cn = connect();
+    cn.any('select * from person', [(true)])
+        .then(function (data) {
 
-        res.status(200)
-            .json({
-              status: 'success',
-              data: data,
-              message: 'Retrieved ALL persons'
-            });
-        console.log(data);
-      })
-      .catch(function (err) {
-        return next(err);
-      })
-      .finally(cn.$pool.end);
+            res.status(200)
+                .json({
+                    status: 'success',
+                    data: data,
+                    message: 'Retrieved ALL persons'
+                });
+            console.log(data);
+        })
+        .catch(function (err) {
+            return next(err);
+        })
+        .finally(cn.$pool.end);
 }
 
 function getSinglePerson(req, res, next) {
@@ -138,6 +139,23 @@ function getSinglePerson(req, res, next) {
         .finally(cn.$pool.end);
 }
 
+function getLatestPerson(req, res, next) {
+    const cn = connect();
+    cn.one('select * from person order by person_id desc limit 1')
+        .then(function (data) {
+            res.status(200)
+                .json({
+                    status: 'success',
+                    data: data,
+                    message: 'Retrieved ONE person'
+                });
+            console.log(data);
+        })
+        .catch(function (err) {
+            return next(err);
+        })
+        .finally(cn.$pool.end);
+}
 
 function createPerson(req, res, next) {
     console.log("Person to create : ");
@@ -164,7 +182,6 @@ function createPerson(req, res, next) {
             return next(err);
         })
         .finally(cn.$pool.end);
-
 }
 
 
@@ -173,7 +190,7 @@ function updatePerson(req, res, next) {
     const cn = connect();
     cn.none('update person set person_first_name=$1, person_last_name=$2, person_mail=$3, person_phone=$4 where person_id=$5',
         [req.body.person_first_name, req.body.person_last_name,
-            req.body.person_mail, req.body.person_phone, parseInt(req.params.id)])
+        req.body.person_mail, req.body.person_phone, parseInt(req.params.id)])
         .then(function () {
             res.status(200)
                 .json({
@@ -187,7 +204,7 @@ function updatePerson(req, res, next) {
         .finally(cn.$pool.end);
 }
 
-function removePerson (req, res, next) {
+function removePerson(req, res, next) {
     const persId = parseInt(req.params.id);
     const cn = connect();
     cn.result('delete from person where person_id = $1', persId)
@@ -284,7 +301,7 @@ function updatePlace(req, res, next) {
         .finally(cn.$pool.end);
 }
 
-function removePlace (req, res, next) {
+function removePlace(req, res, next) {
     const persId = parseInt(req.params.id);
     const cn = connect();
     cn.result('delete from place where place_id = $1', persId)
@@ -372,7 +389,7 @@ function updateCheckpoint(req, res, next) {
     const cn = connect();
     cn.none('update checkpoint set checkpoint_description=$1, checkpoint_start_date=$2, checkpoint_end_date=$3 where checkpoint_id=$4',
         [req.body.checkpoint_description, req.body.checkpoint_start_date,
-            req.body.checkpoint_end_date, parseInt(req.params.id)])
+        req.body.checkpoint_end_date, parseInt(req.params.id)])
         .then(function () {
             res.status(200)
                 .json({
@@ -386,7 +403,7 @@ function updateCheckpoint(req, res, next) {
         .finally(cn.$pool.end);
 }
 
-function removeCheckpoint (req, res, next) {
+function removeCheckpoint(req, res, next) {
     const cpId = parseInt(req.params.id);
     const cn = connect();
     cn.result('delete from checkpoint where checkpoint_id = $1', cpId)

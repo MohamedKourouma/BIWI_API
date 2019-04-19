@@ -36,6 +36,7 @@ router.delete('/persons/:id', removePerson);
 
 router.post('/checkpoints', createCheckpoint);
 router.get('/checkpoints', getAllCheckpoints);
+router.get('/checkpoints/latest', getLatestCheckpoint);
 router.get('/checkpoints/:id', getSingleCheckpoint);
 router.put('/checkpoints/:id', updateCheckpoint);
 router.delete('/checkpoints/:id', removeCheckpoint);
@@ -359,6 +360,25 @@ function getAllCheckpoints(req, res, next) {
         })
         .finally(cn.$pool.end);
 }
+
+function getLatestCheckpoint(req, res, next) {
+    const cn = connect();
+    cn.one('select * from checkpoint order by checkpoint_id desc limit 1')
+        .then(function (data) {
+            res.status(200)
+                .json({
+                    status: 'success',
+                    data: data,
+                    message: 'Retrieved ONE checkpoint'
+                });
+            console.log(data);
+        })
+        .catch(function (err) {
+            return next(err);
+        })
+        .finally(cn.$pool.end);
+}
+
 
 function getSingleCheckpoint(req, res, next) {
     var cpID = parseInt(req.params.id);

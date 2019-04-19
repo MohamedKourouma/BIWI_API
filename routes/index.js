@@ -27,6 +27,7 @@ module.exports = {
 router.post('/persons', createPerson);
 router.get('/persons', getAllPersons);
 router.get('/persons/latest', getLatestPerson);
+router.get('/persons/checkpoint/:id', getPersonsByCheckpoint);
 router.get('/persons/:id', getSinglePerson);
 router.put('/persons/:id', updatePerson);
 router.delete('/persons/:id', removePerson);
@@ -103,7 +104,7 @@ module.exports = router;
 function getAllPersons(req, res, next) {
     //console.log("Personnes");
     const cn = connect();
-    cn.any('select * from person', [(true)])
+    cn.any('select * from view_person_position', [(true)])
         .then(function (data) {
 
             res.status(200)
@@ -130,6 +131,26 @@ function getSinglePerson(req, res, next) {
                     status: 'success',
                     data: data,
                     message: 'Retrieved ONE person'
+                });
+            console.log(data);
+        })
+        .catch(function (err) {
+            return next(err);
+        })
+        .finally(cn.$pool.end);
+}
+
+function getPersonsByCheckpoint(req, res, next) {
+    var cpID = parseInt(req.params.id);
+    const cn = connect();
+    cn.any('select * from view_person_position where person_id in (select presence_id_person from presence where presence_id_checkpoint = $1)', cpID)
+        .then(function (data) {
+
+            res.status(200)
+                .json({
+                    status: 'success',
+                    data: data,
+                    message: 'Retrieved ALL persons BY given checkpoint'
                 });
             console.log(data);
         })

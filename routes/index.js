@@ -48,6 +48,10 @@ router.delete('/places/:id', removePlace);
 /* image upload. */
 router.post('/persons/upload', addPersonImage);
 
+/* insert people for checkpoint */
+router.post('/presence', addPeopleToCheckpoint);
+router.get('/presence/latest/:idP/:idCP', getLatestPresence);
+
 function connect() {
 
     const initOptions = {
@@ -464,4 +468,52 @@ function addPersonImage(req, res) {
             console.log(err.code);
         }
     });
+}
+
+/* PRESENCE */
+
+function addPeopleToCheckpoint(req, res, next) {
+    console.log("Person to add for selected checkpoint : ");
+    console.log(req.body);
+
+    const presence_id_person = req.body.presence_id_person;
+    const presence_id_checkpoint = req.body.presence_id_checkpoint;
+
+    const cn = connect();
+    cn.none('insert into presence(presence_id_person, presence_id_checkpoint)' +
+        'values( $1, $2)',
+        [presence_id_person, presence_id_checkpoint])
+        .then(function () {
+            res.status(200)
+                .json({
+                    status: 'success',
+                    message: 'Add people to checkpoint'
+                });
+        })
+        .catch(function (err) {
+            return next(err);
+        })
+        .finally(cn.$pool.end);
+}
+
+function getLatestPresence(req, res, next) {
+    var presence_id_person = parseInt(req.params.idP);
+    var presence_id_checkpoint = parseInt(req.params.idCP);
+
+    const cn = connect();
+    cn.one('select * from view_presence_person where presence_id_person = $1 and presence_id_checkpoint = $2',
+        [presence_id_person, presence_id_checkpoint])
+        .then(function (data) {
+            res.status(200)
+                .json({
+                    status: 'success',
+                    data: data,
+                    message: 'Retrieved ONE presence'
+                });
+            console.log(data);
+        })
+        .catch(function (err) {
+            return next(err);
+        })
+        .finally(cn.$pool.end);
 }

@@ -144,7 +144,7 @@ function getSinglePerson(req, res, next) {
 function getPersonsByCheckpoint(req, res, next) {
     var cpID = parseInt(req.params.id);
     const cn = connect();
-    cn.any('select * from view_person_position where person_id in (select presence_id_person from presence where presence_id_checkpoint = $1)', cpID)
+    cn.any('select * from view_presence_person where presence_id_checkpoint = $1', cpID)
         .then(function (data) {
 
             res.status(200)

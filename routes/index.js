@@ -1,4 +1,5 @@
 const express = require('express');
+const multer = require('multer');
 const router = express.Router();
 
 //var queries = require('../queries');
@@ -7,7 +8,6 @@ const router = express.Router();
 router.get('/', function (req, res, next) {
     res.render('index', { title: 'Express' });
 });
-
 
 module.exports = router;
 
@@ -21,9 +21,7 @@ module.exports = {
 };
 */
 
-
 /*persons pages. */
-
 router.post('/persons', createPerson);
 router.get('/persons', getAllPersons);
 router.get('/persons/latest', getLatestPerson);
@@ -33,7 +31,6 @@ router.put('/persons/:id', updatePerson);
 router.delete('/persons/:id', removePerson);
 
 /*persons pages. */
-
 router.post('/checkpoints', createCheckpoint);
 router.get('/checkpoints', getAllCheckpoints);
 router.get('/checkpoints/latest', getLatestCheckpoint);
@@ -41,24 +38,23 @@ router.get('/checkpoints/:id', getSingleCheckpoint);
 router.put('/checkpoints/:id', updateCheckpoint);
 router.delete('/checkpoints/:id', removeCheckpoint);
 
-
 /* places page. */
-
 router.post('/places', createPlace);
 router.get('/places', getAllPlaces);
 router.get('/places/:id', getSinglePlace);
 router.put('/places/:id', updatePlace);
 router.delete('/places/:id', removePlace);
 
-
+/* image upload. */
+router.post('/persons/upload', addPersonImage);
 
 function connect() {
 
     const initOptions = {
         schema: 'public'
     };
-    const pgp = require('pg-promise')(initOptions);
 
+    const pgp = require('pg-promise')(initOptions);
 
     //var {dbconfig} = require('./../config/dbConfig');
 
@@ -71,7 +67,6 @@ function connect() {
         password: 'fc3f34cad9dc486ee12dae073396bcdd394ec341ea4ca14269dd623563e46ee4',
         dialect: 'postgres'
     };
-
 
     var db = {
         database: dbconfig.database,
@@ -88,20 +83,16 @@ function connect() {
     const cn = pgp(connectionString);
 
     return cn;
-
 }
-
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
     res.render('index', { title: 'Express' });
 });
 
-
 module.exports = router;
 
 /* PERSONS CRUD */
-
 function getAllPersons(req, res, next) {
     //console.log("Personnes");
     const cn = connect();
@@ -188,7 +179,6 @@ function createPerson(req, res, next) {
     const mail = req.body.person_mail;
     const phone = req.body.person_phone;
 
-
     const cn = connect();
     cn.none('insert into person(person_first_name, person_last_name, person_mail, person_phone, person_id_position)' +
         'values( $1, $2, $3, $4, 1)',
@@ -205,7 +195,6 @@ function createPerson(req, res, next) {
         })
         .finally(cn.$pool.end);
 }
-
 
 function updatePerson(req, res, next) {
 
@@ -241,10 +230,7 @@ function removePerson(req, res, next) {
         .finally(cn.$pool.end);
 }
 
-
-
 /* PLACES CRUD */
-
 function getAllPlaces(req, res, next) {
     //console.log("Places");
     const cn = connect();
@@ -284,7 +270,6 @@ function getSinglePlace(req, res, next) {
         .finally(cn.$pool.end);
 }
 
-
 function createPlace(req, res, next) {
     const lib = req.body.place_lib;
 
@@ -303,7 +288,6 @@ function createPlace(req, res, next) {
         })
         .finally(cn.$pool.end);
 }
-
 
 function updatePlace(req, res, next) {
 
@@ -338,9 +322,7 @@ function removePlace(req, res, next) {
         .finally(cn.$pool.end);
 }
 
-
 /* CHECKPOINTS CRUD */
-
 function getAllCheckpoints(req, res, next) {
     //console.log("Checkpoints");
     const cn = connect();
@@ -379,7 +361,6 @@ function getLatestCheckpoint(req, res, next) {
         .finally(cn.$pool.end);
 }
 
-
 function getSingleCheckpoint(req, res, next) {
     var cpID = parseInt(req.params.id);
     const cn = connect();
@@ -398,7 +379,6 @@ function getSingleCheckpoint(req, res, next) {
         })
         .finally(cn.$pool.end);
 }
-
 
 function createCheckpoint(req, res, next) {
 
@@ -423,7 +403,6 @@ function createCheckpoint(req, res, next) {
         })
         .finally(cn.$pool.end);
 }
-
 
 function updateCheckpoint(req, res, next) {
 
@@ -459,5 +438,30 @@ function removeCheckpoint(req, res, next) {
         .finally(cn.$pool.end);
 }
 
+function addPersonImage(req, res) {
+    const upload = multer({
+        storage: multer.diskStorage({
+            destination: function (req, file, cb) {
+                if (file.mimetype === 'image/jpeg') {
+                    cb(null, './uploads/images/');
+                } else {
+                    console.log('File is not an image.');
+                    cb({ error: 'Mime type not supported.' });
+                }
+            },
+            filename: function (req, file, cb) {
+                cb(null, file.originalname);
+            }
+        })
+    }).single('photo');
 
-
+    upload(req, res, function (err) {
+        if (!err) {
+            console.log('File uploaded succesfully.');
+            console.log(req.file);
+        } else {
+            console.log('An error occured.');
+            console.log(err.code);
+        }
+    });
+}

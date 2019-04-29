@@ -1,1 +1,4 @@
+.idea
 node_modules
+uploads/images/*
+!uploads/images/.gitkeep
